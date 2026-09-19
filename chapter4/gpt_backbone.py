@@ -84,6 +84,31 @@ out_ln = ln(batch_example)
 torch.set_printoptions(sci_mode=False)
 mean = out_ln.mean(dim=-1,keepdim=True)
 var = out_ln.var(dim=-1,unbiased=False,keepdim=True)
-print("Mean:\n",mean)
-print("Var:\n",var)
 
+class FeedForward(nn.Module):
+    def __init__(self,cfg):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(cfg["emb_dim"],4*cfg["emb_dim"]),
+            GELU(),
+            nn.Linear(4*cfg["emb_dim"],cfg["emb_dim"]),
+        )
+    def forward(self,x):
+        return self.layers(x)
+
+
+
+class GELU(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self,x):
+        return 0.5 * x * (1+torch.tanh(
+            torch.sqrt(torch.tensor(2.0/torch.pi))*
+            (x+0.044715 * torch.pow(x,3))
+        ))
+
+ffn = FeedForward(cfg)
+x=torch.rand(2,3,768)
+out = ffn(x)
+print(out.shape)
